@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:fragment="title">Analytics - Parking Management System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-chart-line me-2"></i>Analytics Dashboard</h2>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" onclick="showPeriod('month')">This Month</button>
+                <button type="button" class="btn btn-outline-primary" onclick="showPeriod('week')">This Week</button>
+                <button type="button" class="btn btn-outline-primary" onclick="showPeriod('day')">Today</button>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary"><i class="fas fa-calendar-check"></i></h5>
+                        <h3 class="text-primary" th:text="${monthlyBookings}">0</h3>
+                        <p class="card-text mb-0">Monthly Bookings</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-success"><i class="fas fa-rupee-sign"></i></h5>
+                        <h3 class="text-success" th:text="${'₹' + #numbers.formatDecimal(monthlyRevenue != null ? monthlyRevenue : 0, 1, 2)}">₹0.00</h3>
+                        <p class="card-text mb-0">Monthly Revenue</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-info"><i class="fas fa-percentage"></i></h5>
+                        <h3 class="text-info">85%</h3>
+                        <p class="card-text mb-0">Occupancy Rate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning"><i class="fas fa-star"></i></h5>
+                        <h3 class="text-warning">4.8</h3>
+                        <p class="card-text mb-0">Avg Rating</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Revenue Trend</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Booking Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bookingChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Analytics -->
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Peak Hours</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="peakHoursChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Slot Utilization</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="utilizationChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recent Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">New Booking</h6>
+                                    <small class="text-muted">Slot A1 booked</small>
+                                </div>
+                                <small class="text-muted">2 min ago</small>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Payment Received</h6>
+                                    <small class="text-muted">₹ from booking</small>
+                                </div>
+                                <small class="text-muted">5 min ago</small>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Slot Released</h6>
+                                    <small class="text-muted">Slot available</small>
+                                </div>
+                                <small class="text-muted">10 min ago</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function showPeriod(period) {
+                document.querySelectorAll('.btn-group .btn').forEach(function(btn) { btn.classList.remove('active'); });
+                if (event && event.target) event.target.classList.add('active');
+                console.log('Showing analytics for:', period);
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                var revenueCtx = document.getElementById('revenueChart');
+                if (revenueCtx) {
+                    new Chart(revenueCtx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                            datasets: [{ label: 'Revenue (₹)', data: [1200, 1500, 1800, 2100], borderColor: 'rgb(75, 192, 192)', backgroundColor: 'rgba(75, 192, 192, 0.2)', tension: 0.1 }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                    });
+                }
+                var bookingCtx = document.getElementById('bookingChart');
+                if (bookingCtx) {
+                    new Chart(bookingCtx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Completed', 'Active', 'Cancelled', 'Pending'],
+                            datasets: [{ data: [65, 20, 10, 5], backgroundColor: ['rgb(75, 192, 192)', 'rgb(255, 205, 86)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)'] }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+                var peakCtx = document.getElementById('peakHoursChart');
+                if (peakCtx) {
+                    new Chart(peakCtx.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: ['6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM', '8PM'],
+                            datasets: [{ label: 'Bookings', data: [5, 15, 25, 20, 18, 22, 30, 12], backgroundColor: 'rgba(54, 162, 235, 0.8)' }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                    });
+                }
+                var utilCtx = document.getElementById('utilizationChart');
+                if (utilCtx) {
+                    new Chart(utilCtx.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: ['Floor 1', 'Floor 2', 'Floor 3'],
+                            datasets: [{ label: 'Utilization %', data: [85, 92, 78], backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 205, 86, 0.8)'] }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+                    });
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

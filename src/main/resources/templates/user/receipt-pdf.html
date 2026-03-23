@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Parking Receipt</title>
+</head>
+<body style="font-family: Arial, sans-serif; font-size: 12px; padding: 24px; max-width: 400px; margin: 0 auto;">
+    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 20px;">
+        <h1 style="margin: 0; font-size: 20px;">Parking Receipt</h1>
+        <p style="margin: 4px 0 0 0; color: #666;">Booking #<span th:text="${booking.id}">1</span></p>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 6px 0; color: #666;">Customer</td>
+            <td style="padding: 6px 0; text-align: right;" th:text="${user.firstName + ' ' + user.lastName}">John Doe</td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 0; color: #666;">Email</td>
+            <td style="padding: 6px 0; text-align: right;" th:text="${user.email}">user@example.com</td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 0; color: #666;">Vehicle</td>
+            <td style="padding: 6px 0; text-align: right;" th:text="${booking.vehicle.licensePlate + ' (' + booking.vehicle.make + ' ' + booking.vehicle.model + ')'}">ABC-123 (Toyota Camry)</td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 0; color: #666;">Slot</td>
+            <td style="padding: 6px 0; text-align: right;" th:text="${booking.parkingSlot.slotNumber + ' (Floor ' + booking.parkingSlot.floor + ')'}">A01 (Floor 1)</td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 0; color: #666;">Start time</td>
+            <td style="padding: 6px 0; text-align: right;" th:text="${#temporals.format(booking.startTime, 'MMM dd, yyyy HH:mm')}">Jan 15, 2024 10:00</td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 0; color: #666;">End time</td>
+            <td style="padding: 6px 0; text-align: right;" th:text="${booking.endTime != null ? #temporals.format(booking.endTime, 'MMM dd, yyyy HH:mm') : '-'}">Jan 15, 2024 12:00</td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 0; color: #666;">Status</td>
+            <td style="padding: 6px 0; text-align: right;" th:text="${booking.status.name()}">COMPLETED</td>
+        </tr>
+        <tr style="border-top: 2px solid #333;">
+            <td style="padding: 12px 0 0 0; font-weight: bold;">Total amount</td>
+            <td style="padding: 12px 0 0 0; text-align: right; font-weight: bold;" th:text="${'₹' + #numbers.formatDecimal(booking.amount, 1, 2)}">₹120.00</td>
+        </tr>
+    </table>
+    <p style="text-align: center; margin-top: 24px; color: #999; font-size: 10px;">Thank you for using our parking service.</p>
+</body>
+</html>

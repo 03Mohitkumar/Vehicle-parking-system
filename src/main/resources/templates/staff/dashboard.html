@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:fragment="title">Staff Dashboard - Parking Management System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Staff Dashboard</h2>
+            <span class="text-muted">Welcome, <span th:text="${user.firstName}">Staff</span>!</span>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-sign-in-alt fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Vehicle Entries</h5>
+                        <p class="card-text mb-2">Record vehicle entry to parking</p>
+                        <p class="mb-2" th:if="${awaitingEntryCount != null and awaitingEntryCount > 0}">
+                            <span class="badge bg-warning text-dark" th:text="${awaitingEntryCount + ' awaiting entry'}">0 awaiting entry</span>
+                        </p>
+                        <a th:href="@{/staff/entries}" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>Entries
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-sign-out-alt fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Vehicle Exits</h5>
+                        <p class="card-text mb-2">Record vehicle exit from parking</p>
+                        <p class="mb-2" th:if="${activeRecordsCount != null and activeRecordsCount > 0}">
+                            <span class="badge bg-info" th:text="${activeRecordsCount + ' currently parked'}">0 currently parked</span>
+                        </p>
+                        <a th:href="@{/staff/exits}" class="btn btn-success">
+                            <i class="fas fa-sign-out-alt me-2"></i>Exits
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Confirmed bookings awaiting entry (same list as Entries page) -->
+        <div class="card mb-4" th:if="${confirmedBookings != null and !confirmedBookings.empty}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Confirmed Bookings – Awaiting Entry</h5>
+                <a th:href="@{/staff/entries}" class="btn btn-sm btn-outline-light">View all</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Booking #</th>
+                                <th>Slot</th>
+                                <th>Floor</th>
+                                <th>Vehicle</th>
+                                <th>Customer</th>
+                                <th>Start Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="booking : ${confirmedBookings}">
+                                <td th:text="${booking.id}">1</td>
+                                <td th:text="${booking.parkingSlot.slotNumber}">P02</td>
+                                <td th:text="${booking.parkingSlot.floor}">1</td>
+                                <td th:text="${booking.vehicle.licensePlate}">ABC-123</td>
+                                <td th:text="${booking.user.firstName + ' ' + booking.user.lastName}">User</td>
+                                <td th:text="${#temporals.format(booking.startTime, 'MMM dd, HH:mm')}">Feb 02, 23:24</td>
+                                <td>
+                                    <form th:action="@{/staff/entries/record}" method="post" class="d-inline">
+                                        <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                        <button type="submit" class="btn btn-sm btn-success">Record Entry</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
