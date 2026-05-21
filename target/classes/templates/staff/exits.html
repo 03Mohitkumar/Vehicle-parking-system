@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:fragment="title">Vehicle Exits - Parking Management System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-sign-out-alt me-2"></i>Vehicle Exits</h2>
+            <a th:href="@{/staff/dashboard}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+        <p class="text-muted">Record vehicle exit when a customer leaves. Select a record and click &quot;Record Exit&quot; to free the slot and complete the booking.</p>
+
+        <!-- Active parking records (vehicle still parked) -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-car me-2"></i>Currently Parked (Awaiting Exit)</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${activeRecords != null and !activeRecords.empty}" class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Record #</th>
+                                <th>Booking #</th>
+                                <th>Slot</th>
+                                <th>Floor</th>
+                                <th>Vehicle</th>
+                                <th>Customer</th>
+                                <th>Entry Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="record : ${activeRecords}">
+                                <td th:text="${record.id}">1</td>
+                                <td th:text="${record.booking.id}">1</td>
+                                <td th:text="${record.booking.parkingSlot.slotNumber}">A01</td>
+                                <td th:text="${record.booking.parkingSlot.floor}">1</td>
+                                <td th:text="${record.booking.vehicle.licensePlate}">ABC-123</td>
+                                <td th:text="${record.booking.user.firstName + ' ' + record.booking.user.lastName}">John Doe</td>
+                                <td th:text="${#temporals.format(record.entryTime, 'MMM dd, HH:mm')}">Feb 02, 10:00</td>
+                                <td>
+                                    <form th:action="@{/staff/exits/record}" method="post" class="d-inline">
+                                        <input type="hidden" name="recordId" th:value="${record.id}">
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-sign-out-alt me-1"></i>Record Exit
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${activeRecords == null or activeRecords.empty}" class="text-center text-muted py-4">
+                    <i class="fas fa-parking fa-3x mb-3"></i>
+                    <p class="mb-0">No vehicles currently parked.</p>
+                    <p class="small">Record entry on the Entries page first; then vehicles will appear here for exit.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:fragment="title">My Bookings - Parking Management System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <style>
+            .booking-card { transition: transform 0.2s; }
+            .booking-card:hover { transform: translateY(-2px); }
+            .status-completed { border-left: 4px solid #28a745; }
+            .status-active { border-left: 4px solid #007bff; }
+            .status-cancelled { border-left: 4px solid #dc3545; }
+            .status-pending { border-left: 4px solid #ffc107; }
+            .status-confirmed { border-left: 4px solid #17a2b8; }
+            .status-expired { border-left: 4px solid #6c757d; }
+        </style>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-calendar-check me-2"></i>My Bookings</h2>
+            <a th:href="@{/user/slots}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>New Booking
+            </a>
+        </div>
+
+        <!-- Booking status guide -->
+        <div class="card mb-4 border-0 bg-light">
+            <div class="card-body py-2">
+                <p class="mb-1 small text-muted"><i class="fas fa-info-circle me-1"></i><strong>Status meanings:</strong></p>
+                <div class="d-flex flex-wrap gap-2 small">
+                    <span class="badge bg-warning text-dark" title="Awaiting confirmation">PENDING</span> Awaiting confirmation
+                    <span class="badge bg-info">CONFIRMED</span> Slot reserved for you
+                    <span class="badge bg-primary">ACTIVE</span> Parking in progress
+                    <span class="badge bg-success">COMPLETED</span> Finished; payment done
+                    <span class="badge bg-danger">CANCELLED</span> Booking cancelled
+                    <span class="badge bg-secondary">EXPIRED</span> Expired or no-show
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter and Search -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="statusFilter" class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="CONFIRMED">Confirmed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="EXPIRED">Expired</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateFilter" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="dateFilter" placeholder="Filter by date">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="searchInput" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search by slot number or vehicle...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings List -->
+        <div class="row" id="bookingsList">
+            <div th:each="booking : ${bookings}" class="col-md-6 mb-3">
+                <div class="card booking-card h-100" th:classappend="${booking.status.name() == 'COMPLETED' ? 'status-completed' : (booking.status.name() == 'ACTIVE' ? 'status-active' : (booking.status.name() == 'CANCELLED' ? 'status-cancelled' : (booking.status.name() == 'PENDING' ? 'status-pending' : (booking.status.name() == 'CONFIRMED' ? 'status-confirmed' : 'status-expired'))))}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="card-title mb-1" th:text="${'Booking #' + booking.id}">Booking #1234</h6>
+                                <small class="text-muted" th:text="${#temporals.format(booking.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 15, 2024 10:30</small>
+                            </div>
+                            <span class="badge" th:classappend="${booking.status.name() == 'PENDING' ? 'bg-warning' : (booking.status.name() == 'CONFIRMED' ? 'bg-info' : (booking.status.name() == 'ACTIVE' ? 'bg-primary' : (booking.status.name() == 'COMPLETED' ? 'bg-success' : (booking.status.name() == 'CANCELLED' ? 'bg-danger' : 'bg-secondary'))))}" th:title="${booking.status.name() == 'PENDING' ? 'Awaiting confirmation' : (booking.status.name() == 'CONFIRMED' ? 'Slot reserved for you' : (booking.status.name() == 'ACTIVE' ? 'Parking in progress' : (booking.status.name() == 'COMPLETED' ? 'Finished; payment done' : (booking.status.name() == 'CANCELLED' ? 'Booking cancelled' : 'Expired or no-show'))))}" th:text="${booking.status.name()}">Active</span>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Slot</small>
+                                <div th:text="${booking.parkingSlot.slotNumber}">A1</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Floor</small>
+                                <div th:text="${booking.parkingSlot.floor}">1</div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Vehicle</small>
+                                <div th:text="${booking.vehicle.licensePlate}">ABC-123</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Type</small>
+                                <div th:text="${booking.vehicle.vehicleType.name()}">SEDAN</div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Start Time</small>
+                                <div th:text="${#temporals.format(booking.startTime, 'MMM dd, HH:mm')}">Jan 15, 10:30</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">End Time</small>
+                                <div th:text="${booking.expectedEndTime != null ? #temporals.format(booking.expectedEndTime, 'MMM dd, HH:mm') : '-'}">Jan 15, 12:30</div>
+                            </div>
+                        </div>
+                        <div class="row mb-3" th:if="${booking.endTime != null}">
+                            <div class="col-6">
+                                <small class="text-muted">Actual End</small>
+                                <div th:text="${#temporals.format(booking.endTime, 'MMM dd, HH:mm')}">Jan 15, 12:45</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Total Amount</small>
+                                <div class="fw-bold" th:text="${'₹' + #numbers.formatDecimal(booking.amount, 1, 2)}">₹15.00</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-info" th:data-booking-id="${booking.id}" onclick="viewBooking(this.dataset.bookingId)" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" th:data-booking-id="${booking.id}" onclick="downloadReceipt(this.dataset.bookingId)" th:if="${booking.status.name() == 'COMPLETED'}" title="Download Receipt">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" th:data-booking-id="${booking.id}" onclick="cancelBooking(this.dataset.bookingId)" th:if="${booking.status.name() == 'PENDING' || booking.status.name() == 'ACTIVE'}" title="Cancel Booking">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${bookings != null and bookings.isEmpty()}" class="text-center py-5">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Bookings Found</h4>
+            <p class="text-muted">You haven't made any bookings yet. Start by viewing available slots!</p>
+            <a th:href="@{/user/slots}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Make Your First Booking
+            </a>
+        </div>
+
+        <script>
+            function cancelBooking(bookingId) {
+                if (confirm('Are you sure you want to cancel this booking?')) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/user/bookings/' + bookingId + '/cancel';
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+            function viewBooking(bookingId) {
+                alert('View booking details for ID: ' + bookingId);
+            }
+            function downloadReceipt(bookingId) {
+                if (!bookingId) return;
+                window.location.href = '/user/bookings/' + bookingId + '/receipt';
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                var statusFilter = document.getElementById('statusFilter');
+                var dateFilter = document.getElementById('dateFilter');
+                var searchInput = document.getElementById('searchInput');
+                if (statusFilter) statusFilter.addEventListener('change', filterBookings);
+                if (dateFilter) dateFilter.addEventListener('change', filterBookings);
+                if (searchInput) searchInput.addEventListener('input', filterBookings);
+            });
+            function filterBookings() {
+                var statusFilter = document.getElementById('statusFilter');
+                var dateFilter = document.getElementById('dateFilter');
+                var searchInput = document.getElementById('searchInput');
+                if (!statusFilter || !dateFilter || !searchInput) return;
+                var statusVal = statusFilter.value;
+                var dateVal = dateFilter.value;
+                var searchVal = searchInput.value.toLowerCase();
+                var cards = document.querySelectorAll('.booking-card');
+                cards.forEach(function(card) {
+                    var badge = card.querySelector('.badge');
+                    var slotNumber = (card.querySelector('.card-title') || {}).textContent || '';
+                    var rows = card.querySelectorAll('.row .col-6 div');
+                    var vehicle = rows.length > 3 ? rows[3].textContent : '';
+                    var startTime = rows.length > 7 ? rows[7].textContent : '';
+                    var status = badge ? badge.textContent : '';
+                    var show = true;
+                    if (statusVal && status !== statusVal) show = false;
+                    if (dateVal && startTime.indexOf(dateVal) === -1) show = false;
+                    if (searchVal && slotNumber.toLowerCase().indexOf(searchVal) === -1 && vehicle.toLowerCase().indexOf(searchVal) === -1) show = false;
+                    var col = card.closest('.col-md-6');
+                    if (col) col.style.display = show ? 'block' : 'none';
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:fragment="title">Find Parking Slots - Parking Management System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-search me-2"></i>Find Parking Slots</h2>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" onclick="filterSlots('all')">All</button>
+                <button type="button" class="btn btn-outline-primary" onclick="filterSlots('available')">Available</button>
+                <button type="button" class="btn btn-outline-primary" onclick="filterSlots('floor1')">Floor 1</button>
+                <button type="button" class="btn btn-outline-primary" onclick="filterSlots('floor2')">Floor 2</button>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="slotType" class="form-label">Slot Type</label>
+                        <select class="form-select" id="slotType" onchange="filterSlots()">
+                            <option value="">All Types</option>
+                            <option value="STANDARD">Standard</option>
+                            <option value="PREMIUM">Premium</option>
+                            <option value="DISABLED">Disabled</option>
+                            <option value="EV_CHARGING">EV Charging</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="floor" class="form-label">Floor</label>
+                        <select class="form-select" id="floor" onchange="filterSlots()">
+                            <option value="">All Floors</option>
+                            <option value="1">Floor 1</option>
+                            <option value="2">Floor 2</option>
+                            <option value="3">Floor 3</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="maxRate" class="form-label">Max Hourly Rate</label>
+                        <input type="number" class="form-control" id="maxRate" placeholder="Any" step="0.01" onchange="filterSlots()">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="slotSearch" class="form-label">Search slot</label>
+                        <input type="text" class="form-control" id="slotSearch" placeholder="e.g. A01, B02" oninput="filterSlots()">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary w-100" onclick="filterSlots()">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Parking Slots Grid -->
+        <div class="row" id="slotsContainer">
+            <div th:each="slot : ${slots}" class="col-md-3 mb-3 slot-item" 
+                 th:data-floor="${slot.floor}" 
+                 th:data-type="${slot.slotType.name()}"
+                 th:data-rate="${slot.hourlyRate}"
+                 th:data-status="${slot.status.name()}"
+                 th:data-slot-number="${slot.slotNumber}">
+                <div class="card h-100" th:classappend="${slot.status.name() == 'AVAILABLE' ? 'border-success' : (slot.status.name() == 'OCCUPIED' ? 'border-danger' : (slot.status.name() == 'RESERVED' ? 'border-warning' : 'border-secondary'))}">
+                    <div class="card-body text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-square fa-2x" th:classappend="${slot.status.name() == 'AVAILABLE' ? 'text-success' : (slot.status.name() == 'OCCUPIED' ? 'text-danger' : (slot.status.name() == 'RESERVED' ? 'text-warning' : 'text-secondary'))}"></i>
+                        </div>
+                        <h5 class="card-title" th:text="${slot.slotNumber}">A1</h5>
+                        <p class="card-text">
+                            <small class="text-muted">Floor <span th:text="${slot.floor}">1</span></small><br>
+                            <span class="badge" th:classappend="${slot.slotType.name() == 'STANDARD' ? 'bg-primary' : (slot.slotType.name() == 'PREMIUM' ? 'bg-warning' : (slot.slotType.name() == 'DISABLED' ? 'bg-info' : 'bg-success'))}"
+                                  th:text="${slot.slotType.name()}">STANDARD</span>
+                        </p>
+                        <p class="card-text">
+                            <strong>₹<span th:text="${#numbers.formatDecimal(slot.hourlyRate, 1, 2)}">10.00</span></strong>/hour
+                        </p>
+                        <div th:if="${slot.status.name() == 'AVAILABLE'}">
+                            <a th:href="@{/user/book(slotId=${slot.id})}" class="btn btn-success btn-sm">
+                                <i class="fas fa-bookmark me-1"></i>Book Now
+                            </a>
+                        </div>
+                        <div th:if="${slot.status.name() != 'AVAILABLE'}">
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                <i class="fas fa-times me-1"></i>
+                                <span th:text="${slot.status.name()}">OCCUPIED</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- No Results -->
+        <div id="noResults" class="text-center py-5" style="display: none;">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No slots found matching your criteria</h5>
+            <p class="text-muted">Try adjusting your filters or check back later</p>
+        </div>
+
+        <script>
+            function filterSlots(filter) {
+                var slotTypeEl = document.getElementById('slotType');
+                var floorEl = document.getElementById('floor');
+                var maxRateEl = document.getElementById('maxRate');
+                var slotSearchEl = document.getElementById('slotSearch');
+                if (!slotTypeEl || !floorEl || !maxRateEl) return;
+                var slotType = slotTypeEl.value;
+                var floor = floorEl.value;
+                var maxRate = maxRateEl.value;
+                var searchText = slotSearchEl ? slotSearchEl.value.trim().toLowerCase() : '';
+                var slots = document.querySelectorAll('.slot-item');
+                var visibleCount = 0;
+                slots.forEach(function(slot) {
+                    var show = true;
+                    if (filter) {
+                        if (filter === 'available') {
+                            show = slot.dataset.status === 'AVAILABLE';
+                        } else if (filter === 'floor1') {
+                            show = slot.dataset.floor === '1';
+                        } else if (filter === 'floor2') {
+                            show = slot.dataset.floor === '2';
+                        }
+                    }
+                    if (show && slotType && slot.dataset.type !== slotType) show = false;
+                    if (show && floor && slot.dataset.floor !== floor) show = false;
+                    if (show && maxRate) {
+                        var rate = parseFloat(slot.dataset.rate);
+                        var max = parseFloat(maxRate);
+                        if (isNaN(rate) || isNaN(max) || rate > max) show = false;
+                    }
+                    if (show && searchText) {
+                        var slotNumber = (slot.dataset.slotNumber || '').toLowerCase();
+                        if (slotNumber.indexOf(searchText) === -1) show = false;
+                    }
+                    slot.style.display = show ? 'block' : 'none';
+                    if (show) visibleCount++;
+                });
+                var noResults = document.getElementById('noResults');
+                if (noResults) noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+        </script>
+    </div>
+</body>
+</html>
